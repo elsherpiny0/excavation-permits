@@ -190,18 +190,50 @@ export default function PermitDetail() {
                             <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {schemaFields
                                     .filter((f) => permit.custom_fields[f.field_key] !== undefined)
-                                    .map((field) => (
-                                        <div key={field.id}>
-                                            <dt className="text-sm text-surface-500 mb-1">{field.label}</dt>
-                                            <dd className="text-surface-900 font-medium">
-                                                {field.field_type === 'checkbox'
-                                                    ? permit.custom_fields[field.field_key]
-                                                        ? 'Yes'
-                                                        : 'No'
-                                                    : permit.custom_fields[field.field_key] || '-'}
-                                            </dd>
-                                        </div>
-                                    ))}
+                                    .map((field) => {
+                                        const fieldValue = permit.custom_fields[field.field_key];
+
+                                        // Handle attachments differently
+                                        if (field.field_type === 'attachments' && Array.isArray(fieldValue)) {
+                                            return (
+                                                <div key={field.id} className="md:col-span-2">
+                                                    <dt className="text-sm text-surface-500 mb-2">{field.label}</dt>
+                                                    <dd className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                        {fieldValue.map((url, idx) => {
+                                                            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+                                                            return (
+                                                                <a
+                                                                    key={idx}
+                                                                    href={url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center gap-2 p-2 bg-surface-50 rounded-lg hover:bg-surface-100 transition-colors"
+                                                                >
+                                                                    {isImage ? (
+                                                                        <img src={url} alt="" className="w-10 h-10 rounded object-cover" />
+                                                                    ) : (
+                                                                        <FileText className="w-5 h-5 text-surface-400" />
+                                                                    )}
+                                                                    <span className="text-sm text-surface-700">File {idx + 1}</span>
+                                                                </a>
+                                                            );
+                                                        })}
+                                                    </dd>
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <div key={field.id}>
+                                                <dt className="text-sm text-surface-500 mb-1">{field.label}</dt>
+                                                <dd className="text-surface-900 font-medium">
+                                                    {field.field_type === 'checkbox'
+                                                        ? fieldValue ? 'Yes' : 'No'
+                                                        : fieldValue || '-'}
+                                                </dd>
+                                            </div>
+                                        );
+                                    })}
                             </dl>
                         </div>
                     )}

@@ -232,6 +232,21 @@ export default function PermitForm() {
                         ))}
                     </select>
                 );
+            case 'attachments':
+                // Store attachments as array of URLs in custom_fields
+                const attachmentFiles = Array.isArray(value) ? value.map((url, idx) => ({
+                    url,
+                    name: `File ${idx + 1}`,
+                    format: url.split('.').pop()?.split('?')[0] || 'unknown',
+                    size: 0,
+                })) : [];
+                return (
+                    <FileUploader
+                        files={attachmentFiles}
+                        onFilesChange={(newFiles) => handleCustomFieldChange(field.field_key, newFiles.map(f => f.url))}
+                        maxFiles={5}
+                    />
+                );
             default:
                 return null;
         }

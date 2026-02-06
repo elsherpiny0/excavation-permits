@@ -15,6 +15,7 @@ import {
     List,
     Loader2,
     X,
+    Paperclip,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -24,6 +25,7 @@ const fieldTypes = [
     { value: 'date', label: 'Date', icon: Calendar },
     { value: 'checkbox', label: 'Checkbox', icon: CheckSquare },
     { value: 'select', label: 'Dropdown', icon: List },
+    { value: 'attachments', label: 'Attachments', icon: Paperclip },
 ];
 
 export default function SchemaEditor() {
@@ -381,8 +383,8 @@ export default function SchemaEditor() {
                                             type="button"
                                             onClick={() => setNewField({ ...newField, field_type: type.value })}
                                             className={`flex items-center gap-2 p-3 rounded-xl border transition-all ${newField.field_type === type.value
-                                                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                                                    : 'border-surface-200 hover:border-surface-300'
+                                                ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                                : 'border-surface-200 hover:border-surface-300'
                                                 }`}
                                         >
                                             <type.icon className="w-4 h-4" />
