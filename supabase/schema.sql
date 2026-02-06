@@ -44,7 +44,7 @@ CREATE TABLE schema_fields (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   field_key TEXT NOT NULL UNIQUE,
   label TEXT NOT NULL,
-  field_type TEXT NOT NULL CHECK (field_type IN ('text', 'number', 'date', 'checkbox', 'select')),
+  field_type TEXT NOT NULL CHECK (field_type IN ('text', 'number', 'date', 'checkbox', 'select', 'attachments')),
   options JSONB DEFAULT '[]',  -- For select dropdowns: ["Option 1", "Option 2"]
   required BOOLEAN DEFAULT false,
   sort_order INTEGER DEFAULT 0,
