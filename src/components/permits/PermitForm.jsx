@@ -41,8 +41,6 @@ export default function PermitForm() {
         fetchSchemaFields();
         if (isEditing) {
             fetchPermit();
-        } else {
-            generatePermitNumber();
         }
     }, [id]);
 
@@ -273,8 +271,9 @@ export default function PermitForm() {
                                 name="permit_number"
                                 value={formData.permit_number}
                                 onChange={handleChange}
-                                className="input bg-surface-50"
-                                readOnly
+                                className="input"
+                                placeholder="Enter permit number (e.g., 2026-001)"
+                                required
                             />
                         </div>
 
