@@ -96,12 +96,17 @@ export default function PermitDetail() {
                     <div>
                         <div className="flex items-center gap-3">
                             <h1 className="text-3xl font-bold text-surface-900">
-                                {permit.permit_number}
+                                {permit.permit_number || permit.pre_permit_number || 'Permit'}
                             </h1>
                             <span className={statusColors[permit.status]}>
                                 {permit.status.charAt(0).toUpperCase() + permit.status.slice(1)}
                             </span>
                         </div>
+                        {permit.pre_permit_number && (
+                            <p className="text-sm text-surface-500">
+                                Pre Permit #: {permit.pre_permit_number}
+                            </p>
+                        )}
                         <p className="text-surface-500 mt-1">
                             Created on {new Date(permit.created_at).toLocaleDateString()}
                         </p>
@@ -139,13 +144,12 @@ export default function PermitDetail() {
                                 </dt>
                                 <dd className="text-surface-900 font-medium">{permit.location}</dd>
                             </div>
-                            <div>
-                                <dt className="text-sm text-surface-500 mb-1 flex items-center gap-1">
-                                    <User className="w-4 h-4" />
-                                    Contractor
-                                </dt>
-                                <dd className="text-surface-900 font-medium">{permit.contractor}</dd>
-                            </div>
+                            {permit.permit_number && (
+                                <div>
+                                    <dt className="text-sm text-surface-500 mb-1">Permit Number</dt>
+                                    <dd className="text-surface-900 font-medium font-mono">{permit.permit_number}</dd>
+                                </div>
+                            )}
                             <div>
                                 <dt className="text-sm text-surface-500 mb-1 flex items-center gap-1">
                                     <Calendar className="w-4 h-4" />
@@ -289,6 +293,6 @@ export default function PermitDetail() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

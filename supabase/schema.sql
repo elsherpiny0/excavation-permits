@@ -58,9 +58,10 @@ CREATE TABLE schema_fields (
 -- =============================================
 CREATE TABLE permits (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  permit_number TEXT UNIQUE NOT NULL,
+  permit_number TEXT UNIQUE,
+  pre_permit_number TEXT,
   location TEXT NOT NULL,
-  contractor TEXT NOT NULL,
+  contractor TEXT,  -- Made nullable
   start_date DATE NOT NULL,
   end_date DATE,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'denied', 'completed')),

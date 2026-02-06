@@ -8,12 +8,24 @@ import {
     Save,
     Loader2,
     MapPin,
-    User,
     Calendar,
     FileText,
-    Trash2,
+    Hash,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+// Helper function to get today's date in YYYY-MM-DD format
+function getTodayDate() {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+}
+
+// Helper function to get date 15 days from today
+function getEndDate() {
+    const date = new Date();
+    date.setDate(date.getDate() + 15);
+    return date.toISOString().split('T')[0];
+}
 
 export default function PermitForm() {
     const { id } = useParams();
@@ -27,11 +39,11 @@ export default function PermitForm() {
     const [files, setFiles] = useState([]);
 
     const [formData, setFormData] = useState({
+        pre_permit_number: '',
         permit_number: '',
         location: '',
-        contractor: '',
-        start_date: '',
-        end_date: '',
+        start_date: getTodayDate(),
+        end_date: getEndDate(),
         status: 'pending',
         notes: '',
         custom_fields: {},
@@ -55,13 +67,6 @@ export default function PermitForm() {
         }
     }
 
-    async function generatePermitNumber() {
-        const { data, error } = await supabase.rpc('generate_permit_number');
-        if (!error && data) {
-            setFormData((prev) => ({ ...prev, permit_number: data }));
-        }
-    }
-
     async function fetchPermit() {
         setLoading(true);
         try {
@@ -74,9 +79,9 @@ export default function PermitForm() {
             if (error) throw error;
 
             setFormData({
-                permit_number: data.permit_number,
+                pre_permit_number: data.pre_permit_number || '',
+                permit_number: data.permit_number || '',
                 location: data.location,
-                contractor: data.contractor,
                 start_date: data.start_date,
                 end_date: data.end_date || '',
                 status: data.status,
@@ -126,9 +131,10 @@ export default function PermitForm() {
 
         try {
             const permitData = {
-                permit_number: formData.permit_number,
+                pre_permit_number: formData.pre_permit_number || null,
+                permit_number: formData.permit_number || null,
                 location: formData.location,
-                contractor: formData.contractor,
+                contractor: '', // Empty string for legacy column
                 start_date: formData.start_date,
                 end_date: formData.end_date || null,
                 status: formData.status,
@@ -145,6 +151,10 @@ export default function PermitForm() {
                 if (error) throw error;
                 toast.success('Permit updated');
             } else {
+                // For new permits, don't send permit_number if empty
+                if (!permitData.permit_number) {
+                    delete permitData.permit_number;
+                }
                 const { error } = await supabase
                     .from('permits')
                     .insert([{ ...permitData, created_by: user.id }]);
@@ -264,18 +274,36 @@ export default function PermitForm() {
                     </h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Pre Permit Number - Always shown */}
                         <div>
-                            <label className="label">Permit Number</label>
+                            <label className="label">
+                                <Hash className="w-4 h-4 inline mr-1" />
+                                Pre Permit Number
+                            </label>
                             <input
                                 type="text"
-                                name="permit_number"
-                                value={formData.permit_number}
+                                name="pre_permit_number"
+                                value={formData.pre_permit_number}
                                 onChange={handleChange}
                                 className="input"
-                                placeholder="Enter permit number (e.g., 2026-001)"
-                                required
+                                placeholder="Enter pre-permit number"
                             />
                         </div>
+
+                        {/* Permit Number - Only shown when editing */}
+                        {isEditing && (
+                            <div>
+                                <label className="label">Permit Number</label>
+                                <input
+                                    type="text"
+                                    name="permit_number"
+                                    value={formData.permit_number}
+                                    onChange={handleChange}
+                                    className="input"
+                                    placeholder="Enter permit number"
+                                />
+                            </div>
+                        )}
 
                         <div>
                             <label className="label">Status</label>
@@ -309,22 +337,6 @@ export default function PermitForm() {
                             />
                         </div>
 
-                        <div className="md:col-span-2">
-                            <label className="label">
-                                <User className="w-4 h-4 inline mr-1" />
-                                Contractor
-                            </label>
-                            <input
-                                type="text"
-                                name="contractor"
-                                value={formData.contractor}
-                                onChange={handleChange}
-                                className="input"
-                                placeholder="Enter contractor name"
-                                required
-                            />
-                        </div>
-
                         <div>
                             <label className="label">
                                 <Calendar className="w-4 h-4 inline mr-1" />
@@ -343,7 +355,7 @@ export default function PermitForm() {
                         <div>
                             <label className="label">
                                 <Calendar className="w-4 h-4 inline mr-1" />
-                                End Date (Optional)
+                                End Date
                             </label>
                             <input
                                 type="date"

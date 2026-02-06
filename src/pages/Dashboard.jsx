@@ -174,7 +174,7 @@ export default function Dashboard() {
                                     Location
                                 </th>
                                 <th className="text-left px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
-                                    Contractor
+                                    Pre Permit #
                                 </th>
                                 <th className="text-left px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
                                     Dates
@@ -217,7 +217,7 @@ export default function Dashboard() {
                                                 <span className="text-surface-700">{permit.location}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-surface-700">{permit.contractor}</td>
+                                        <td className="px-6 py-4 text-surface-700 font-mono">{permit.pre_permit_number || '-'}</td>
                                         <td className="px-6 py-4 text-surface-600 text-sm">
                                             {new Date(permit.start_date).toLocaleDateString()}
                                             {permit.end_date && ` - ${new Date(permit.end_date).toLocaleDateString()}`}
