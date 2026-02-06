@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import {
     Search,
     Filter,
@@ -285,8 +285,8 @@ export default function Dashboard() {
                                         key={pageNum}
                                         onClick={() => setPage(pageNum)}
                                         className={`w-10 h-10 rounded-lg font-medium transition-colors ${page === pageNum
-                                                ? 'bg-primary-500 text-white'
-                                                : 'text-surface-600 hover:bg-surface-100'
+                                            ? 'bg-primary-500 text-white'
+                                            : 'text-surface-600 hover:bg-surface-100'
                                             }`}
                                     >
                                         {pageNum}
