@@ -11,11 +11,15 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let currentUserId = null;
+
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
+            const userId = session?.user?.id ?? null;
+            currentUserId = userId;
             setUser(session?.user ?? null);
-            if (session?.user) {
-                fetchProfile(session.user.id);
+            if (userId) {
+                fetchProfile(userId);
             } else {
                 setLoading(false);
             }
@@ -24,13 +28,20 @@ export function AuthProvider({ children }) {
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-                setUser(session?.user ?? null);
-                if (session?.user) {
-                    await fetchProfile(session.user.id);
-                } else {
-                    setProfile(null);
-                    setLoading(false);
+                const newUserId = session?.user?.id ?? null;
+
+                // Only update state if user actually changed
+                if (currentUserId !== newUserId) {
+                    currentUserId = newUserId;
+                    setUser(session?.user ?? null);
+                    if (newUserId) {
+                        await fetchProfile(newUserId);
+                    } else {
+                        setProfile(null);
+                        setLoading(false);
+                    }
                 }
+                // For TOKEN_REFRESHED events, don't refetch profile
             }
         );
 
