@@ -64,7 +64,7 @@ CREATE TABLE permits (
   contractor TEXT,  -- Made nullable
   start_date DATE NOT NULL,
   end_date DATE,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'denied', 'completed')),
+  status TEXT DEFAULT 'pending',  -- No constraint, managed by status_options table
   custom_fields JSONB DEFAULT '{}',  -- Dynamic fields: {"field_key": "value"}
   file_urls TEXT[] DEFAULT '{}',     -- Cloudinary URLs
   notes TEXT,
@@ -80,13 +80,33 @@ CREATE INDEX idx_permits_location ON permits(location);
 CREATE INDEX idx_permits_created_at ON permits(created_at DESC);
 
 -- =============================================
--- 4. ROW LEVEL SECURITY POLICIES
+-- 4. STATUS OPTIONS TABLE (Dynamic Status Management)
+-- =============================================
+CREATE TABLE status_options (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  status_key TEXT NOT NULL UNIQUE,
+  label TEXT NOT NULL,
+  color TEXT DEFAULT 'gray',
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert default statuses
+INSERT INTO status_options (status_key, label, color, sort_order) VALUES
+  ('pending', 'Pending', 'amber', 0),
+  ('approved', 'Approved', 'green', 1),
+  ('denied', 'Denied', 'red', 2),
+  ('completed', 'Completed', 'blue', 3);
+
+-- =============================================
+-- 5. ROW LEVEL SECURITY POLICIES
 -- =============================================
 
 -- Enable RLS
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schema_fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE permits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE status_options ENABLE ROW LEVEL SECURITY;
 
 -- PROFILES POLICIES
 -- Users can view all profiles
@@ -136,6 +156,40 @@ CREATE POLICY "Super admins can update schema fields"
 
 CREATE POLICY "Super admins can delete schema fields"
   ON schema_fields FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'super_admin'
+    )
+  );
+
+-- STATUS OPTIONS POLICIES
+-- All authenticated users can view status options
+CREATE POLICY "Authenticated users can view status options"
+  ON status_options FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
+-- Only super admins can manage status options
+CREATE POLICY "Super admins can insert status options"
+  ON status_options FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'super_admin'
+    )
+  );
+
+CREATE POLICY "Super admins can update status options"
+  ON status_options FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'super_admin'
+    )
+  );
+
+CREATE POLICY "Super admins can delete status options"
+  ON status_options FOR DELETE
   USING (
     EXISTS (
       SELECT 1 FROM profiles

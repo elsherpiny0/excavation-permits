@@ -16,11 +16,15 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const statusColors = {
-    pending: 'badge-pending',
-    approved: 'badge-approved',
-    denied: 'badge-denied',
-    completed: 'badge-completed',
+const statusColorClasses = {
+    gray: 'bg-gray-100 text-gray-700',
+    amber: 'bg-amber-100 text-amber-700',
+    green: 'bg-green-100 text-green-700',
+    red: 'bg-red-100 text-red-700',
+    blue: 'bg-blue-100 text-blue-700',
+    purple: 'bg-purple-100 text-purple-700',
+    orange: 'bg-orange-100 text-orange-700',
+    teal: 'bg-teal-100 text-teal-700',
 };
 
 export default function PermitDetail() {
@@ -29,11 +33,13 @@ export default function PermitDetail() {
     const { isSuperAdmin } = useAuth();
     const [permit, setPermit] = useState(null);
     const [schemaFields, setSchemaFields] = useState([]);
+    const [statusOptions, setStatusOptions] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchPermit();
         fetchSchemaFields();
+        fetchStatusOptions();
     }, [id]);
 
     async function fetchPermit() {
@@ -60,6 +66,14 @@ export default function PermitDetail() {
             .select('*')
             .order('sort_order');
         if (data) setSchemaFields(data);
+    }
+
+    async function fetchStatusOptions() {
+        const { data } = await supabase
+            .from('status_options')
+            .select('*')
+            .order('sort_order');
+        if (data) setStatusOptions(data);
     }
 
     async function deletePermit() {
@@ -98,9 +112,16 @@ export default function PermitDetail() {
                             <h1 className="text-3xl font-bold text-surface-900">
                                 {permit.permit_number || permit.pre_permit_number || 'Permit'}
                             </h1>
-                            <span className={statusColors[permit.status]}>
-                                {permit.status.charAt(0).toUpperCase() + permit.status.slice(1)}
-                            </span>
+                            {(() => {
+                                const statusOpt = statusOptions.find(s => s.status_key === permit.status);
+                                const colorClass = statusOpt ? (statusColorClasses[statusOpt.color] || 'bg-gray-100 text-gray-700') : 'bg-gray-100 text-gray-700';
+                                const label = statusOpt?.label || (permit.status?.charAt(0).toUpperCase() + permit.status?.slice(1)) || '-';
+                                return (
+                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${colorClass}`}>
+                                        {label}
+                                    </span>
+                                );
+                            })()}
                         </div>
                         {permit.pre_permit_number && (
                             <p className="text-sm text-surface-500">

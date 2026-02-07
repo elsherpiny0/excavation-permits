@@ -28,6 +28,17 @@ const fieldTypes = [
     { value: 'attachments', label: 'Attachments', icon: Paperclip },
 ];
 
+const statusColors = [
+    { value: 'gray', label: 'Gray', class: 'bg-gray-100 text-gray-700' },
+    { value: 'amber', label: 'Amber', class: 'bg-amber-100 text-amber-700' },
+    { value: 'green', label: 'Green', class: 'bg-green-100 text-green-700' },
+    { value: 'red', label: 'Red', class: 'bg-red-100 text-red-700' },
+    { value: 'blue', label: 'Blue', class: 'bg-blue-100 text-blue-700' },
+    { value: 'purple', label: 'Purple', class: 'bg-purple-100 text-purple-700' },
+    { value: 'orange', label: 'Orange', class: 'bg-orange-100 text-orange-700' },
+    { value: 'teal', label: 'Teal', class: 'bg-teal-100 text-teal-700' },
+];
+
 export default function SchemaEditor() {
     const { isSuperAdmin } = useAuth();
     const [fields, setFields] = useState([]);
@@ -44,8 +55,19 @@ export default function SchemaEditor() {
         options: [],
     });
 
+    // Status Options State
+    const [statuses, setStatuses] = useState([]);
+    const [showAddStatusModal, setShowAddStatusModal] = useState(false);
+    const [editingStatus, setEditingStatus] = useState(null);
+    const [newStatus, setNewStatus] = useState({
+        status_key: '',
+        label: '',
+        color: 'gray',
+    });
+
     useEffect(() => {
         fetchFields();
+        fetchStatuses();
     }, []);
 
     async function fetchFields() {
@@ -60,6 +82,94 @@ export default function SchemaEditor() {
             toast.error('Failed to load fields');
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function fetchStatuses() {
+        try {
+            const { data, error } = await supabase
+                .from('status_options')
+                .select('*')
+                .order('sort_order');
+            if (error) throw error;
+            setStatuses(data || []);
+        } catch (error) {
+            toast.error('Failed to load status options');
+        }
+    }
+
+    const generateStatusKey = (label) => {
+        return label
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_|_$/g, '');
+    };
+
+    async function handleAddStatus(e) {
+        e.preventDefault();
+        if (!newStatus.label) {
+            toast.error('Please enter a status label');
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const { error } = await supabase.from('status_options').insert([
+                {
+                    status_key: newStatus.status_key || generateStatusKey(newStatus.label),
+                    label: newStatus.label,
+                    color: newStatus.color,
+                    sort_order: statuses.length,
+                },
+            ]);
+
+            if (error) throw error;
+
+            toast.success('Status added successfully');
+            setShowAddStatusModal(false);
+            setNewStatus({ status_key: '', label: '', color: 'gray' });
+            fetchStatuses();
+        } catch (error) {
+            toast.error(error.message || 'Failed to add status');
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function handleUpdateStatus(status) {
+        setSaving(true);
+        try {
+            const { error } = await supabase
+                .from('status_options')
+                .update({
+                    label: status.label,
+                    color: status.color,
+                })
+                .eq('id', status.id);
+
+            if (error) throw error;
+            toast.success('Status updated');
+            setEditingStatus(null);
+            fetchStatuses();
+        } catch (error) {
+            toast.error('Failed to update status');
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function handleDeleteStatus(id) {
+        if (!confirm('Are you sure? Permits with this status will keep their current value but the option will no longer appear in dropdowns.')) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase.from('status_options').delete().eq('id', id);
+            if (error) throw error;
+            toast.success('Status deleted');
+            fetchStatuses();
+        } catch (error) {
+            toast.error('Failed to delete status');
         }
     }
 
@@ -333,6 +443,119 @@ export default function SchemaEditor() {
                 )}
             </div>
 
+            {/* Status Options Section */}
+            <div className="mt-12">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="text-xl font-bold text-surface-900 flex items-center gap-2">
+                            <List className="w-6 h-6 text-primary-500" />
+                            Status Options
+                        </h2>
+                        <p className="text-surface-500 text-sm mt-1">
+                            Manage the status values available in permit forms
+                        </p>
+                    </div>
+                    <button onClick={() => setShowAddStatusModal(true)} className="btn-secondary">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Status
+                    </button>
+                </div>
+
+                <div className="card">
+                    {statuses.length === 0 ? (
+                        <div className="p-8 text-center">
+                            <List className="w-8 h-8 text-surface-400 mx-auto mb-3" />
+                            <p className="text-surface-500">No status options defined yet</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-surface-100">
+                            {statuses.map((status) => {
+                                const colorClass = statusColors.find(c => c.value === status.color)?.class || 'bg-gray-100 text-gray-700';
+                                const isEditing = editingStatus?.id === status.id;
+
+                                return (
+                                    <div key={status.id} className="p-4 hover:bg-surface-50 transition-colors">
+                                        {isEditing ? (
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="label">Label</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editingStatus.label}
+                                                            onChange={(e) =>
+                                                                setEditingStatus({ ...editingStatus, label: e.target.value })
+                                                            }
+                                                            className="input"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="label">Color</label>
+                                                        <select
+                                                            value={editingStatus.color}
+                                                            onChange={(e) =>
+                                                                setEditingStatus({ ...editingStatus, color: e.target.value })
+                                                            }
+                                                            className="input"
+                                                        >
+                                                            {statusColors.map((color) => (
+                                                                <option key={color.value} value={color.value}>
+                                                                    {color.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(editingStatus)}
+                                                        disabled={saving}
+                                                        className="btn-primary"
+                                                    >
+                                                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                                                        Save
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditingStatus(null)}
+                                                        className="btn-secondary"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-4">
+                                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${colorClass}`}>
+                                                    {status.label}
+                                                </span>
+                                                <span className="text-sm text-surface-500 font-mono">
+                                                    {status.status_key}
+                                                </span>
+                                                <div className="flex-1" />
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => setEditingStatus({ ...status })}
+                                                        className="btn-ghost p-2"
+                                                    >
+                                                        <Settings className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteStatus(status.id)}
+                                                        className="btn-ghost p-2 text-red-500 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Add Field Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -437,6 +660,92 @@ export default function SchemaEditor() {
                                         <>
                                             <Plus className="w-5 h-5 mr-2" />
                                             Add Field
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Status Modal */}
+            {showAddStatusModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="card w-full max-w-md p-6 animate-in">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-surface-900">Add Status Option</h2>
+                            <button
+                                onClick={() => setShowAddStatusModal(false)}
+                                className="btn-ghost p-2"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddStatus} className="space-y-4">
+                            <div>
+                                <label className="label">Label *</label>
+                                <input
+                                    type="text"
+                                    value={newStatus.label}
+                                    onChange={(e) => setNewStatus({
+                                        ...newStatus,
+                                        label: e.target.value,
+                                        status_key: generateStatusKey(e.target.value)
+                                    })}
+                                    className="input"
+                                    placeholder="e.g., In Progress"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label">Key (auto-generated)</label>
+                                <input
+                                    type="text"
+                                    value={newStatus.status_key}
+                                    onChange={(e) => setNewStatus({ ...newStatus, status_key: e.target.value })}
+                                    className="input font-mono"
+                                    placeholder="in_progress"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label">Color</label>
+                                <select
+                                    value={newStatus.color}
+                                    onChange={(e) => setNewStatus({ ...newStatus, color: e.target.value })}
+                                    className="input"
+                                >
+                                    {statusColors.map((color) => (
+                                        <option key={color.value} value={color.value}>
+                                            {color.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="mt-2">
+                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors.find(c => c.value === newStatus.color)?.class || 'bg-gray-100 text-gray-700'}`}>
+                                        {newStatus.label || 'Preview'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddStatusModal(false)}
+                                    className="btn-secondary flex-1"
+                                >
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={saving} className="btn-primary flex-1">
+                                    {saving ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Plus className="w-5 h-5 mr-2" />
+                                            Add Status
                                         </>
                                     )}
                                 </button>

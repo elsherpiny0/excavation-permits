@@ -36,6 +36,7 @@ export default function PermitForm() {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [schemaFields, setSchemaFields] = useState([]);
+    const [statusOptions, setStatusOptions] = useState([]);
     const [files, setFiles] = useState([]);
 
     const [formData, setFormData] = useState({
@@ -51,6 +52,7 @@ export default function PermitForm() {
 
     useEffect(() => {
         fetchSchemaFields();
+        fetchStatusOptions();
         if (isEditing) {
             fetchPermit();
         }
@@ -64,6 +66,17 @@ export default function PermitForm() {
 
         if (!error && data) {
             setSchemaFields(data);
+        }
+    }
+
+    async function fetchStatusOptions() {
+        const { data, error } = await supabase
+            .from('status_options')
+            .select('*')
+            .order('sort_order');
+
+        if (!error && data) {
+            setStatusOptions(data);
         }
     }
 
@@ -329,10 +342,20 @@ export default function PermitForm() {
                                 className="input"
                                 disabled={!isSuperAdmin && isEditing}
                             >
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="denied">Denied</option>
-                                <option value="completed">Completed</option>
+                                {statusOptions.length > 0 ? (
+                                    statusOptions.map((opt) => (
+                                        <option key={opt.status_key} value={opt.status_key}>
+                                            {opt.label}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="denied">Denied</option>
+                                        <option value="completed">Completed</option>
+                                    </>
+                                )}
                             </select>
                         </div>
 

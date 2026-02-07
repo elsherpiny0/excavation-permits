@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "type": "chrome",
+            "name": "https://excavation-permits.vercel.app/",
+            "request": "launch",
+            "url": "https://excavation-permits.vercel.app/"
+        }
+    ]
+}

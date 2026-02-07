@@ -20,11 +20,15 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const statusColors = {
-    pending: 'badge-pending',
-    approved: 'badge-approved',
-    denied: 'badge-denied',
-    completed: 'badge-completed',
+const statusColorClasses = {
+    gray: 'bg-gray-100 text-gray-700',
+    amber: 'bg-amber-100 text-amber-700',
+    green: 'bg-green-100 text-green-700',
+    red: 'bg-red-100 text-red-700',
+    blue: 'bg-blue-100 text-blue-700',
+    purple: 'bg-purple-100 text-purple-700',
+    orange: 'bg-orange-100 text-orange-700',
+    teal: 'bg-teal-100 text-teal-700',
 };
 
 export default function Dashboard() {
@@ -33,14 +37,29 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [statusOptions, setStatusOptions] = useState([]);
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [selectedPermit, setSelectedPermit] = useState(null);
     const perPage = 10;
 
     useEffect(() => {
+        fetchStatusOptions();
+    }, []);
+
+    useEffect(() => {
         fetchPermits();
     }, [page, statusFilter, searchQuery]);
+
+    async function fetchStatusOptions() {
+        const { data, error } = await supabase
+            .from('status_options')
+            .select('*')
+            .order('sort_order');
+        if (!error && data) {
+            setStatusOptions(data);
+        }
+    }
 
     async function fetchPermits() {
         setLoading(true);
@@ -152,10 +171,20 @@ export default function Dashboard() {
                             className="input pl-12 pr-12 appearance-none cursor-pointer min-w-[180px]"
                         >
                             <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="denied">Denied</option>
-                            <option value="completed">Completed</option>
+                            {statusOptions.length > 0 ? (
+                                statusOptions.map((opt) => (
+                                    <option key={opt.status_key} value={opt.status_key}>
+                                        {opt.label}
+                                    </option>
+                                ))
+                            ) : (
+                                <>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="denied">Denied</option>
+                                    <option value="completed">Completed</option>
+                                </>
+                            )}
                         </select>
                     </div>
                 </div>
@@ -223,9 +252,16 @@ export default function Dashboard() {
                                             {permit.end_date && ` - ${new Date(permit.end_date).toLocaleDateString()}`}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={statusColors[permit.status]}>
-                                                {permit.status.charAt(0).toUpperCase() + permit.status.slice(1)}
-                                            </span>
+                                            {(() => {
+                                                const statusOpt = statusOptions.find(s => s.status_key === permit.status);
+                                                const colorClass = statusOpt ? (statusColorClasses[statusOpt.color] || 'bg-gray-100 text-gray-700') : 'bg-gray-100 text-gray-700';
+                                                const label = statusOpt?.label || (permit.status?.charAt(0).toUpperCase() + permit.status?.slice(1)) || '-';
+                                                return (
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+                                                        {label}
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 text-surface-600 text-sm">
                                             {permit.profiles?.full_name || permit.profiles?.email || 'Unknown'}
