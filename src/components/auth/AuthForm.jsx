@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Mail, Lock, User, ArrowRight, Loader2, HardHat } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, HardHat, AtSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AuthForm() {
@@ -111,18 +111,18 @@ export default function AuthForm() {
 
                         <div>
                             <label htmlFor="email" className="label text-white/80">
-                                Email
+                                البريد الإلكتروني أو اسم المستخدم
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
+                                <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
                                 <input
                                     id="email"
                                     name="email"
-                                    type="email"
+                                    type="text"
                                     value={formData.email}
                                     onChange={handleChange}
                                     className="input pl-12 bg-white/10 border-white/20 text-white placeholder-white/40 focus:bg-white/20"
-                                    placeholder="you@example.com"
+                                    placeholder="email@example.com أو username"
                                     required
                                 />
                             </div>

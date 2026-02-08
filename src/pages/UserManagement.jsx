@@ -266,13 +266,13 @@ export default function UserManagement() {
                             </div>
 
                             <div>
-                                <label className="label">البريد الإلكتروني *</label>
+                                <label className="label">البريد الإلكتروني أو اسم المستخدم *</label>
                                 <input
-                                    type="email"
+                                    type="text"
                                     value={newUser.email}
                                     onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                                     className="input"
-                                    placeholder="example@email.com"
+                                    placeholder="email@example.com أو username"
                                     required
                                     dir="ltr"
                                 />
