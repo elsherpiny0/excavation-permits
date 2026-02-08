@@ -149,6 +149,8 @@ export default function PermitForm() {
                 pre_permit_number: formData.pre_permit_number || null,
                 permit_number: formData.permit_number || null,
                 location: formData.location,
+                excavation_type: formData.excavation_type || null,
+                location_area: formData.location_area || null,
                 contractor: '', // Empty string for legacy column
                 start_date: formData.start_date,
                 end_date: formData.end_date || null,
