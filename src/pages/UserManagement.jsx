@@ -146,6 +146,7 @@ export default function UserManagement() {
             setUsers(users.filter(u => u.id !== userId));
             toast.success('تم حذف المستخدم');
         } catch (error) {
+            console.error('Delete user error:', error);
             toast.error(error.message || 'فشل في حذف المستخدم');
         }
     }
