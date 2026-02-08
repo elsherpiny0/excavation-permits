@@ -146,7 +146,8 @@ export default function Dashboard() {
             setRequestNumber('');
             fetchPermits();
         } catch (error) {
-            toast.error('فشل في حفظ الطلب');
+            console.error('Request error:', error);
+            toast.error(error.message || 'فشل في حفظ الطلب');
         } finally {
             setSubmitting(false);
         }
