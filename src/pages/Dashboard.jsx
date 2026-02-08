@@ -293,6 +293,9 @@ export default function Dashboard() {
                                         Status
                                     </th>
                                     <th className="text-left px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                                        رقم الطلب
+                                    </th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
                                         Created By
                                     </th>
                                     <th className="text-right px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
@@ -303,13 +306,13 @@ export default function Dashboard() {
                             <tbody className="divide-y divide-surface-100">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-12 text-center">
+                                        <td colSpan="8" className="px-6 py-12 text-center">
                                             <Loader2 className="w-8 h-8 animate-spin text-primary-500 mx-auto" />
                                         </td>
                                     </tr>
                                 ) : permits.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-12 text-center text-surface-500">
+                                        <td colSpan="8" className="px-6 py-12 text-center text-surface-500">
                                             No permits found. Create your first permit to get started.
                                         </td>
                                     </tr>
@@ -343,6 +346,15 @@ export default function Dashboard() {
                                                         </span>
                                                     );
                                                 })()}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {permit.permit_request_number || permit.work_completion_request_number || permit.clearance_request_number ? (
+                                                    <span className="px-2 py-1 bg-primary-50 text-primary-700 rounded-lg text-sm font-mono">
+                                                        {permit.permit_request_number || permit.work_completion_request_number || permit.clearance_request_number}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-surface-400">-</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-surface-600 text-sm">
                                                 {permit.profiles?.full_name || permit.profiles?.email || 'Unknown'}
