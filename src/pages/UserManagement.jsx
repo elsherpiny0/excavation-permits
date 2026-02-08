@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Search, Users, Shield, Loader2, Check } from 'lucide-react';
+import { Search, Users, Shield, Loader2, Check, Plus, X, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function UserManagement() {
@@ -12,6 +12,14 @@ export default function UserManagement() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [savingUserId, setSavingUserId] = useState(null);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [creating, setCreating] = useState(false);
+    const [newUser, setNewUser] = useState({
+        email: '',
+        password: '',
+        fullName: '',
+        role: 'staff'
+    });
 
     useEffect(() => {
         fetchRoles();
@@ -78,6 +86,43 @@ export default function UserManagement() {
         }
     }
 
+    async function handleCreateUser(e) {
+        e.preventDefault();
+        if (!newUser.email || !newUser.password) {
+            toast.error('البريد الإلكتروني وكلمة السر مطلوبين');
+            return;
+        }
+        if (newUser.password.length < 6) {
+            toast.error('كلمة السر يجب أن تكون 6 أحرف على الأقل');
+            return;
+        }
+
+        setCreating(true);
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email: newUser.email,
+                password: newUser.password,
+                options: {
+                    data: {
+                        full_name: newUser.fullName,
+                        role: newUser.role,
+                    },
+                },
+            });
+
+            if (error) throw error;
+
+            toast.success('تم إنشاء المستخدم بنجاح');
+            setShowCreateModal(false);
+            setNewUser({ email: '', password: '', fullName: '', role: 'staff' });
+            fetchUsers();
+        } catch (error) {
+            toast.error(error.message || 'فشل في إنشاء المستخدم');
+        } finally {
+            setCreating(false);
+        }
+    }
+
     if (!isSuperAdmin) {
         return <Navigate to="/" replace />;
     }
@@ -90,14 +135,20 @@ export default function UserManagement() {
     return (
         <div className="max-w-4xl mx-auto animate-in">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-surface-900 flex items-center gap-3">
-                    <Users className="w-8 h-8 text-primary-500" />
-                    إدارة المستخدمين
-                </h1>
-                <p className="text-surface-500 mt-1">
-                    البحث عن المستخدمين وتعيين الصلاحيات
-                </p>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-surface-900 flex items-center gap-3">
+                        <Users className="w-8 h-8 text-primary-500" />
+                        إدارة المستخدمين
+                    </h1>
+                    <p className="text-surface-500 mt-1">
+                        البحث عن المستخدمين وتعيين الصلاحيات
+                    </p>
+                </div>
+                <button onClick={() => setShowCreateModal(true)} className="btn-primary">
+                    <UserPlus className="w-5 h-5 mr-2" />
+                    إنشاء مستخدم
+                </button>
             </div>
 
             {/* Search */}
@@ -187,6 +238,98 @@ export default function UserManagement() {
                     </div>
                 )}
             </div>
+
+            {/* Create User Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="card w-full max-w-md p-6 animate-in" dir="rtl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-surface-900">إنشاء مستخدم جديد</h2>
+                            <button
+                                onClick={() => setShowCreateModal(false)}
+                                className="btn-ghost p-2"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleCreateUser} className="space-y-4">
+                            <div>
+                                <label className="label">الاسم الكامل</label>
+                                <input
+                                    type="text"
+                                    value={newUser.fullName}
+                                    onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                                    className="input text-right"
+                                    placeholder="أدخل الاسم"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label">البريد الإلكتروني *</label>
+                                <input
+                                    type="email"
+                                    value={newUser.email}
+                                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                                    className="input"
+                                    placeholder="example@email.com"
+                                    required
+                                    dir="ltr"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label">كلمة السر *</label>
+                                <input
+                                    type="password"
+                                    value={newUser.password}
+                                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                    className="input"
+                                    placeholder="6 أحرف على الأقل"
+                                    required
+                                    minLength={6}
+                                    dir="ltr"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label">الصلاحية</label>
+                                <select
+                                    value={newUser.role}
+                                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                                    className="input text-right"
+                                >
+                                    {roles.map((role) => (
+                                        <option key={role.role_key} value={role.role_key}>
+                                            {role.label_ar}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="btn-secondary flex-1"
+                                >
+                                    إلغاء
+                                </button>
+                                <button type="submit" disabled={creating} className="btn-primary flex-1">
+                                    {creating ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <UserPlus className="w-5 h-5 ml-2" />
+                                            إنشاء
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

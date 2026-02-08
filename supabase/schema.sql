@@ -279,7 +279,29 @@ CREATE TRIGGER update_permits_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================
--- 6. SEED DATA (Optional - for first super admin)
+-- 6. APP SETTINGS TABLE
+-- =============================================
+CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS for app_settings
+ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read settings" ON app_settings FOR SELECT USING (true);
+CREATE POLICY "Super admins can update settings" ON app_settings FOR UPDATE TO authenticated
+    USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'super_admin'));
+CREATE POLICY "Super admins can insert settings" ON app_settings FOR INSERT TO authenticated
+    WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'super_admin'));
+
+-- Default settings
+INSERT INTO app_settings (key, value) VALUES 
+    ('registration_enabled', 'true')
+ON CONFLICT (key) DO NOTHING;
+
+-- =============================================
+-- 7. SEED DATA (Optional - for first super admin)
 -- =============================================
 -- After your first user signs up, run this to make them super admin:
 -- UPDATE profiles SET role = 'super_admin' WHERE email = 'your-email@example.com';

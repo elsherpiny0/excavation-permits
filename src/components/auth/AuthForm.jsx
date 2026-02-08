@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { Mail, Lock, User, ArrowRight, Loader2, HardHat } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AuthForm() {
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [registrationEnabled, setRegistrationEnabled] = useState(true);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -13,6 +15,21 @@ export default function AuthForm() {
     });
 
     const { signIn, signUp } = useAuth();
+
+    useEffect(() => {
+        checkRegistrationSetting();
+    }, []);
+
+    async function checkRegistrationSetting() {
+        const { data } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'registration_enabled')
+            .single();
+        if (data) {
+            setRegistrationEnabled(data.value === true || data.value === 'true');
+        }
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -147,17 +164,19 @@ export default function AuthForm() {
                         </button>
                     </form>
 
-                    <div className="mt-6 text-center">
-                        <button
-                            type="button"
-                            onClick={() => setIsLogin(!isLogin)}
-                            className="text-primary-300 hover:text-primary-200 font-medium transition-colors"
-                        >
-                            {isLogin
-                                ? "Don't have an account? Sign up"
-                                : 'Already have an account? Sign in'}
-                        </button>
-                    </div>
+                    {registrationEnabled && (
+                        <div className="mt-6 text-center">
+                            <button
+                                type="button"
+                                onClick={() => setIsLogin(!isLogin)}
+                                className="text-primary-300 hover:text-primary-200 font-medium transition-colors"
+                            >
+                                {isLogin
+                                    ? "Don't have an account? Sign up"
+                                    : 'Already have an account? Sign in'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

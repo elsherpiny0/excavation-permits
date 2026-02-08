@@ -8,6 +8,7 @@ import {
     LogOut,
     HardHat,
     ChevronRight,
+    Sliders,
 } from 'lucide-react';
 
 const navigation = [
@@ -18,6 +19,7 @@ const navigation = [
 const adminNavigation = [
     { name: 'Schema Editor', href: '/settings/schema', icon: Settings },
     { name: 'User Management', href: '/settings/users', icon: Users },
+    { name: 'App Settings', href: '/settings/app', icon: Sliders },
 ];
 
 export default function Sidebar() {

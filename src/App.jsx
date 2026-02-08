@@ -8,6 +8,7 @@ import PermitForm from './components/permits/PermitForm';
 import PermitDetail from './pages/PermitDetail';
 import SchemaEditor from './pages/SchemaEditor';
 import UserManagement from './pages/UserManagement';
+import AppSettings from './pages/AppSettings';
 import { Loader2 } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
@@ -76,6 +77,7 @@ function AppRoutes() {
                 <Route path="/permits/:id/edit" element={<PermitForm />} />
                 <Route path="/settings/schema" element={<SchemaEditor />} />
                 <Route path="/settings/users" element={<UserManagement />} />
+                <Route path="/settings/app" element={<AppSettings />} />
             </Route>
 
             {/* Fallback */}
