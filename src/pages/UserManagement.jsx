@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Search, Users, Shield, Loader2, Check, Plus, X, UserPlus } from 'lucide-react';
+import { Search, Users, Shield, Loader2, Check, Plus, X, UserPlus, Edit, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function UserManagement() {
@@ -20,6 +20,9 @@ export default function UserManagement() {
         fullName: '',
         role: 'staff'
     });
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const [editData, setEditData] = useState({ fullName: '', role: '' });
 
     useEffect(() => {
         fetchRoles();
@@ -129,6 +132,58 @@ export default function UserManagement() {
         }
     }
 
+    async function handleDeleteUser(userId) {
+        if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', userId);
+
+            if (error) throw error;
+
+            setUsers(users.filter(u => u.id !== userId));
+            toast.success('تم حذف المستخدم');
+        } catch (error) {
+            toast.error(error.message || 'فشل في حذف المستخدم');
+        }
+    }
+
+    function openEditModal(user) {
+        setEditingUser(user);
+        setEditData({ fullName: user.full_name || '', role: user.role || 'staff' });
+        setShowEditModal(true);
+    }
+
+    async function handleEditUser(e) {
+        e.preventDefault();
+        if (!editingUser) return;
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    full_name: editData.fullName,
+                    role: editData.role
+                })
+                .eq('id', editingUser.id);
+
+            if (error) throw error;
+
+            setUsers(users.map(u =>
+                u.id === editingUser.id
+                    ? { ...u, full_name: editData.fullName, role: editData.role }
+                    : u
+            ));
+            toast.success('تم تحديث بيانات المستخدم');
+            setShowEditModal(false);
+            setEditingUser(null);
+        } catch (error) {
+            toast.error(error.message || 'فشل في تحديث المستخدم');
+        }
+    }
+
     if (!isSuperAdmin) {
         return <Navigate to="/" replace />;
     }
@@ -197,6 +252,9 @@ export default function UserManagement() {
                                     <th className="px-6 py-4 text-right text-sm font-semibold text-surface-600">
                                         الصلاحية
                                     </th>
+                                    <th className="px-6 py-4 text-right text-sm font-semibold text-surface-600">
+                                        إجراءات
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-surface-100">
@@ -235,6 +293,24 @@ export default function UserManagement() {
                                                 {savingUserId === user.id && (
                                                     <Loader2 className="w-5 h-5 animate-spin text-primary-500" />
                                                 )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => openEditModal(user)}
+                                                    className="p-2 rounded-lg text-surface-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                                                    title="تعديل"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    className="p-2 rounded-lg text-surface-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                    title="حذف"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -330,6 +406,71 @@ export default function UserManagement() {
                                             إنشاء
                                         </>
                                     )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit User Modal */}
+            {showEditModal && editingUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="card w-full max-w-md p-6 animate-in" dir="rtl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-surface-900">تعديل المستخدم</h2>
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="btn-ghost p-2"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="mb-4 p-3 bg-surface-50 rounded-lg">
+                            <p className="text-sm text-surface-600">
+                                <span className="font-medium">البريد:</span> {editingUser.email}
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleEditUser} className="space-y-4">
+                            <div>
+                                <label className="label">الاسم الكامل</label>
+                                <input
+                                    type="text"
+                                    value={editData.fullName}
+                                    onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
+                                    className="input text-right"
+                                    placeholder="أدخل الاسم"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label">الصلاحية</label>
+                                <select
+                                    value={editData.role}
+                                    onChange={(e) => setEditData({ ...editData, role: e.target.value })}
+                                    className="input text-right"
+                                >
+                                    {roles.map((role) => (
+                                        <option key={role.role_key} value={role.role_key}>
+                                            {role.label_ar}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(false)}
+                                    className="btn-secondary flex-1"
+                                >
+                                    إلغاء
+                                </button>
+                                <button type="submit" className="btn-primary flex-1">
+                                    <Check className="w-5 h-5 ml-2" />
+                                    حفظ
                                 </button>
                             </div>
                         </form>
