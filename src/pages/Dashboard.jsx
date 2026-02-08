@@ -35,6 +35,20 @@ const statusColorClasses = {
     teal: 'bg-teal-100 text-teal-700',
 };
 
+const excavationTypeLabels = {
+    water: 'مياه',
+    sewage: 'صرف صحى',
+};
+
+const locationAreaLabels = {
+    aloyoun: 'العيون',
+    alomran: 'العمران',
+    jawathi: 'جواثي',
+    aljafr: 'الجفر',
+    almubarraz: 'المبرز',
+    alhofuf: 'الهفوف',
+};
+
 export default function Dashboard() {
     const { isSuperAdmin } = useAuth();
     const [permits, setPermits] = useState([]);
@@ -287,6 +301,12 @@ export default function Dashboard() {
                                         Pre Permit #
                                     </th>
                                     <th className="text-left px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                                        نوع الحفرية
+                                    </th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                                        المكان
+                                    </th>
+                                    <th className="text-left px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
                                         Dates
                                     </th>
                                     <th className="text-left px-6 py-4 text-xs font-semibold text-surface-500 uppercase tracking-wider">
@@ -306,13 +326,13 @@ export default function Dashboard() {
                             <tbody className="divide-y divide-surface-100">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-12 text-center">
+                                        <td colSpan="10" className="px-6 py-12 text-center">
                                             <Loader2 className="w-8 h-8 animate-spin text-primary-500 mx-auto" />
                                         </td>
                                     </tr>
                                 ) : permits.length === 0 ? (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-12 text-center text-surface-500">
+                                        <td colSpan="10" className="px-6 py-12 text-center text-surface-500">
                                             No permits found. Create your first permit to get started.
                                         </td>
                                     </tr>
@@ -331,6 +351,16 @@ export default function Dashboard() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-surface-700 font-mono">{permit.pre_permit_number || '-'}</td>
+                                            <td className="px-6 py-4 text-surface-700">
+                                                {permit.excavation_type ? (
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${permit.excavation_type === 'water' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                        {excavationTypeLabels[permit.excavation_type] || '-'}
+                                                    </span>
+                                                ) : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 text-surface-700">
+                                                {locationAreaLabels[permit.location_area] || '-'}
+                                            </td>
                                             <td className="px-6 py-4 text-surface-600 text-sm">
                                                 {new Date(permit.start_date).toLocaleDateString()}
                                                 {permit.end_date && ` - ${new Date(permit.end_date).toLocaleDateString()}`}

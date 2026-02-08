@@ -43,6 +43,8 @@ export default function PermitForm() {
         pre_permit_number: '',
         permit_number: '',
         location: '',
+        excavation_type: '',
+        location_area: '',
         start_date: getTodayDate(),
         end_date: getEndDate(),
         status: 'pending',
@@ -356,6 +358,40 @@ export default function PermitForm() {
                                         <option value="completed">Completed</option>
                                     </>
                                 )}
+                            </select>
+                        </div>
+
+                        {/* Excavation Type */}
+                        <div>
+                            <label className="label">نوع الحفرية</label>
+                            <select
+                                name="excavation_type"
+                                value={formData.excavation_type}
+                                onChange={handleChange}
+                                className="input"
+                            >
+                                <option value="">-- اختر --</option>
+                                <option value="water">مياه</option>
+                                <option value="sewage">صرف صحى</option>
+                            </select>
+                        </div>
+
+                        {/* Location Area */}
+                        <div>
+                            <label className="label">المكان</label>
+                            <select
+                                name="location_area"
+                                value={formData.location_area}
+                                onChange={handleChange}
+                                className="input"
+                            >
+                                <option value="">-- اختر --</option>
+                                <option value="aloyoun">العيون</option>
+                                <option value="alomran">العمران</option>
+                                <option value="jawathi">جواثي</option>
+                                <option value="aljafr">الجفر</option>
+                                <option value="almubarraz">المبرز</option>
+                                <option value="alhofuf">الهفوف</option>
                             </select>
                         </div>
 
