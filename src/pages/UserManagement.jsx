@@ -99,13 +99,19 @@ export default function UserManagement() {
 
         setCreating(true);
         try {
+            // If no @ symbol, treat as username and add domain
+            const emailToUse = newUser.email.includes('@')
+                ? newUser.email
+                : `${newUser.email}@excavation.local`;
+
             const { data, error } = await supabase.auth.signUp({
-                email: newUser.email,
+                email: emailToUse,
                 password: newUser.password,
                 options: {
                     data: {
                         full_name: newUser.fullName,
                         role: newUser.role,
+                        username: newUser.email.includes('@') ? null : newUser.email,
                     },
                 },
             });

@@ -36,21 +36,26 @@ export default function AuthForm() {
         setLoading(true);
 
         try {
+            // If no @ symbol, treat as username and add domain
+            const emailToUse = formData.email.includes('@')
+                ? formData.email
+                : `${formData.email}@excavation.local`;
+
             if (isLogin) {
                 const { error } = await signIn({
-                    email: formData.email,
+                    email: emailToUse,
                     password: formData.password,
                 });
                 if (error) throw error;
-                toast.success('Welcome back!');
+                toast.success('مرحباً بعودتك!');
             } else {
                 const { error } = await signUp({
-                    email: formData.email,
+                    email: emailToUse,
                     password: formData.password,
                     fullName: formData.fullName,
                 });
                 if (error) throw error;
-                toast.success('Account created! Please check your email to verify.');
+                toast.success('تم إنشاء الحساب بنجاح!');
             }
         } catch (error) {
             toast.error(error.message);
