@@ -367,7 +367,7 @@ export default function Dashboard() {
                                                                         className="fixed inset-0 z-40"
                                                                         onClick={() => setOpenMenuId(null)}
                                                                     />
-                                                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-surface-200 py-2 z-50 animate-in" dir="rtl">
+                                                                    <div className="absolute right-0 bottom-full mb-1 w-48 bg-white rounded-xl shadow-xl border border-surface-200 py-2 z-50 animate-in" dir="rtl">
                                                                         {getAvailableActions(permit).map((action) => (
                                                                             <button
                                                                                 key={action.key}
