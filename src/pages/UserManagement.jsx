@@ -102,7 +102,7 @@ export default function UserManagement() {
             // If no @ symbol, treat as username and add domain
             const emailToUse = newUser.email.includes('@')
                 ? newUser.email
-                : `${newUser.email}@permits.internal`;
+                : `${newUser.email}@redrilla.com`;
 
             const { data, error } = await supabase.auth.signUp({
                 email: emailToUse,

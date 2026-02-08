@@ -39,7 +39,7 @@ export default function AuthForm() {
             // If no @ symbol, treat as username and add domain
             const emailToUse = formData.email.includes('@')
                 ? formData.email
-                : `${formData.email}@permits.internal`;
+                : `${formData.email}@redrilla.com`;
 
             if (isLogin) {
                 const { error } = await signIn({
