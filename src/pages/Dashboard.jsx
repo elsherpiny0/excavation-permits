@@ -352,28 +352,37 @@ export default function Dashboard() {
                                                     {getAvailableActions(permit).length > 0 && (
                                                         <div className="relative">
                                                             <button
-                                                                onClick={() => setOpenMenuId(openMenuId === permit.id ? null : permit.id)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setOpenMenuId(openMenuId === permit.id ? null : permit.id);
+                                                                }}
                                                                 className="p-2 rounded-lg text-surface-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
                                                                 title="إجراءات"
                                                             >
                                                                 <MoreVertical className="w-4 h-4" />
                                                             </button>
                                                             {openMenuId === permit.id && (
-                                                                <div className="absolute left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-surface-200 py-1 z-50" dir="rtl">
-                                                                    {getAvailableActions(permit).map((action) => (
-                                                                        <button
-                                                                            key={action.key}
-                                                                            onClick={() => {
-                                                                                setOpenMenuId(null);
-                                                                                setRequestModal({ open: true, type: action.key, permit });
-                                                                            }}
-                                                                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-surface-700 hover:bg-surface-50 transition-colors"
-                                                                        >
-                                                                            <action.icon className="w-4 h-4" />
-                                                                            {action.label}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
+                                                                <>
+                                                                    <div
+                                                                        className="fixed inset-0 z-40"
+                                                                        onClick={() => setOpenMenuId(null)}
+                                                                    />
+                                                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-surface-200 py-2 z-50 animate-in" dir="rtl">
+                                                                        {getAvailableActions(permit).map((action) => (
+                                                                            <button
+                                                                                key={action.key}
+                                                                                onClick={() => {
+                                                                                    setOpenMenuId(null);
+                                                                                    setRequestModal({ open: true, type: action.key, permit });
+                                                                                }}
+                                                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-surface-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
+                                                                            >
+                                                                                <action.icon className="w-4 h-4" />
+                                                                                {action.label}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </>
                                                             )}
                                                         </div>
                                                     )}
