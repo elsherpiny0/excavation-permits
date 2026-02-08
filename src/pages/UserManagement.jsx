@@ -133,21 +133,25 @@ export default function UserManagement() {
     }
 
     async function handleDeleteUser(userId) {
-        if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
+        const user = users.find(u => u.id === userId);
+        const isCurrentlyActive = user?.is_active !== false;
+        const action = isCurrentlyActive ? 'تعطيل' : 'إعادة تفعيل';
+
+        if (!confirm(`هل أنت متأكد من ${action} هذا المستخدم؟`)) return;
 
         try {
             const { error } = await supabase
                 .from('profiles')
-                .delete()
+                .update({ is_active: !isCurrentlyActive })
                 .eq('id', userId);
 
             if (error) throw error;
 
-            setUsers(users.filter(u => u.id !== userId));
-            toast.success('تم حذف المستخدم');
+            setUsers(users.map(u => u.id === userId ? { ...u, is_active: !isCurrentlyActive } : u));
+            toast.success(isCurrentlyActive ? 'تم تعطيل المستخدم' : 'تم تفعيل المستخدم');
         } catch (error) {
-            console.error('Delete user error:', error);
-            toast.error(error.message || 'فشل في حذف المستخدم');
+            console.error('Toggle user error:', error);
+            toast.error(error.message || `فشل في ${action} المستخدم`);
         }
     }
 
@@ -268,9 +272,16 @@ export default function UserManagement() {
                                                         {(user.full_name || user.email || '?')[0].toUpperCase()}
                                                     </span>
                                                 </div>
-                                                <span className="font-medium text-surface-900">
-                                                    {user.full_name || '-'}
-                                                </span>
+                                                <div>
+                                                    <span className="font-medium text-surface-900">
+                                                        {user.full_name || '-'}
+                                                    </span>
+                                                    {user.is_active === false && (
+                                                        <span className="mr-2 px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">
+                                                            معطل
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-surface-600 font-mono text-sm">
@@ -308,7 +319,7 @@ export default function UserManagement() {
                                                 <button
                                                     onClick={() => handleDeleteUser(user.id)}
                                                     className="p-2 rounded-lg text-surface-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                    title="حذف"
+                                                    title={user.is_active === false ? 'إعادة تفعيل' : 'تعطيل'}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
