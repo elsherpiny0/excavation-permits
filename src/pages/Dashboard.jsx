@@ -50,7 +50,7 @@ const locationAreaLabels = {
 };
 
 export default function Dashboard() {
-    const { isSuperAdmin } = useAuth();
+    const { isSuperAdmin, profile } = useAuth();
     const [permits, setPermits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -98,6 +98,28 @@ export default function Dashboard() {
 
             if (searchQuery) {
                 query = query.or(`permit_number.ilike.%${searchQuery}%,location.ilike.%${searchQuery}%,contractor.ilike.%${searchQuery}%`);
+            }
+
+            // Role-based filtering for NWC users
+            const userRole = profile?.role;
+
+            if (userRole === 'nwc_sewage_omran') {
+                // Sewage Omran: pending_send + sewage + (alomran, jawathi, aljafr)
+                query = query
+                    .eq('status', 'pending_send')
+                    .eq('excavation_type', 'sewage')
+                    .in('location_area', ['alomran', 'jawathi', 'aljafr']);
+            } else if (userRole === 'nwc_sewage_oyoun') {
+                // Sewage Oyoun: pending_send + sewage + aloyoun
+                query = query
+                    .eq('status', 'pending_send')
+                    .eq('excavation_type', 'sewage')
+                    .eq('location_area', 'aloyoun');
+            } else if (userRole === 'nwc_water') {
+                // Water: pending_send + water
+                query = query
+                    .eq('status', 'pending_send')
+                    .eq('excavation_type', 'water');
             }
 
             const { data, error, count } = await query;
@@ -216,10 +238,12 @@ export default function Dashboard() {
                         <h1 className="text-3xl font-bold text-surface-900">Dashboard</h1>
                         <p className="text-surface-500 mt-1">Manage excavation permits and track progress</p>
                     </div>
-                    <Link to="/permits/new" className="btn-primary">
-                        <Plus className="w-5 h-5 mr-2" />
-                        New Permit
-                    </Link>
+                    {isSuperAdmin && (
+                        <Link to="/permits/new" className="btn-primary">
+                            <Plus className="w-5 h-5 mr-2" />
+                            New Permit
+                        </Link>
+                    )}
                 </div>
 
                 {/* Stats Grid */}
@@ -436,13 +460,15 @@ export default function Dashboard() {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Link>
-                                                    <Link
-                                                        to={`/permits/${permit.id}/edit`}
-                                                        className="p-2 rounded-lg text-surface-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Link>
+                                                    {isSuperAdmin && (
+                                                        <Link
+                                                            to={`/permits/${permit.id}/edit`}
+                                                            className="p-2 rounded-lg text-surface-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </Link>
+                                                    )}
                                                     {isSuperAdmin && (
                                                         <button
                                                             onClick={() => deletePermit(permit.id)}
