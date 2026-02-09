@@ -71,7 +71,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         fetchPermits();
-    }, [page, statusFilter, searchQuery]);
+    }, [page, statusFilter, searchQuery, profile?.role]);
 
     async function fetchStatusOptions() {
         const { data, error } = await supabase
