@@ -102,13 +102,14 @@ export default function Dashboard() {
 
             // Role-based filtering for NWC users
             const userRole = profile?.role;
+            console.log('User role:', userRole);
 
             if (userRole === 'nwc_sewage_omran') {
-                // Sewage Omran: pending_send + sewage + (alomran, jawathi, aljafr)
+                // Sewage Omran: pending_send + sewage + (alomran, jawathi, aljafr, almubarraz)
                 query = query
                     .eq('status', 'pending_send')
                     .eq('excavation_type', 'sewage')
-                    .in('location_area', ['alomran', 'jawathi', 'aljafr']);
+                    .in('location_area', ['alomran', 'jawathi', 'aljafr', 'almubarraz']);
             } else if (userRole === 'nwc_sewage_oyoun') {
                 // Sewage Oyoun: pending_send + sewage + aloyoun
                 query = query
