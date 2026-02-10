@@ -21,6 +21,7 @@ import {
     FileInput,
     CheckCircle,
     ClipboardList,
+    Send,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -190,6 +191,38 @@ export default function Dashboard() {
         }
     }
 
+    async function handleSendRequest(permit) {
+        const requestType = permit.current_request_type;
+        const typeLabel = getRequestTypeLabel(requestType);
+
+        if (!confirm(`هل ترغب في إرسال الطلب؟\n\nنوع الطلب: ${typeLabel}`)) return;
+
+        try {
+            let newStatus = 'pending_send';
+
+            if (requestType === 'permit') {
+                newStatus = 'pending_municipality';
+            } else if (requestType === 'work_completion') {
+                newStatus = 'pending_work_completion';
+            } else if (requestType === 'clearance') {
+                newStatus = 'pending_clearance';
+            }
+
+            const { error } = await supabase
+                .from('permits')
+                .update({ status: newStatus })
+                .eq('id', permit.id);
+
+            if (error) throw error;
+
+            toast.success('تم إرسال الطلب بنجاح');
+            fetchPermits();
+        } catch (error) {
+            console.error('Send error:', error);
+            toast.error(error.message || 'فشل في إرسال الطلب');
+        }
+    }
+
     function getAvailableActions(permit) {
         const actions = [];
         const status = permit.status;
@@ -207,6 +240,11 @@ export default function Dashboard() {
         // طلب اخلاء طرف - only for pending_clearance
         if (status === 'pending_clearance') {
             actions.push({ key: 'clearance', label: 'طلب اخلاء طرف', icon: ClipboardList });
+        }
+
+        // إرسال الطلب - only for pending_send
+        if (status === 'pending_send') {
+            actions.push({ key: 'send', label: 'إرسال الطلب', icon: Send });
         }
 
         return actions;
@@ -441,7 +479,11 @@ export default function Dashboard() {
                                                                                 key={action.key}
                                                                                 onClick={() => {
                                                                                     setOpenMenuId(null);
-                                                                                    setRequestModal({ open: true, type: action.key, permit });
+                                                                                    if (action.key === 'send') {
+                                                                                        handleSendRequest(permit);
+                                                                                    } else {
+                                                                                        setRequestModal({ open: true, type: action.key, permit });
+                                                                                    }
                                                                                 }}
                                                                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-surface-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
                                                                             >
