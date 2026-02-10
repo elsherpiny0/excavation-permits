@@ -686,7 +686,7 @@ export default function Dashboard() {
 
                                     // Rejected logic
                                     if (requestType === 'permit') {
-                                        newStatus = 'active';
+                                        newStatus = 'pre_permit';
                                     } else if (requestType === 'work_completion') {
                                         newStatus = 'pending_work_completion';
                                     } else if (requestType === 'clearance') {
