@@ -22,6 +22,7 @@ import {
     CheckCircle,
     ClipboardList,
     Send,
+    CheckSquare,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -64,6 +65,7 @@ export default function Dashboard() {
     const [requestModal, setRequestModal] = useState({ open: false, type: null, permit: null });
     const [requestNumber, setRequestNumber] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [finishModal, setFinishModal] = useState({ open: false, permit: null });
     const perPage = 10;
 
     useEffect(() => {
@@ -245,6 +247,11 @@ export default function Dashboard() {
         // إرسال الطلب - only for pending_send
         if (status === 'pending_send') {
             actions.push({ key: 'send', label: 'إرسال الطلب', icon: Send });
+        }
+
+        // انهاء الطلب - super_admin only, for municipality/work/clearance
+        if (isSuperAdmin && (status === 'pending_municipality' || status === 'pending_work_completion' || status === 'pending_clearance')) {
+            actions.push({ key: 'finish', label: 'انهاء الطلب', icon: CheckSquare });
         }
 
         return actions;
@@ -481,6 +488,8 @@ export default function Dashboard() {
                                                                                     setOpenMenuId(null);
                                                                                     if (action.key === 'send') {
                                                                                         handleSendRequest(permit);
+                                                                                    } else if (action.key === 'finish') {
+                                                                                        setFinishModal({ open: true, permit });
                                                                                     } else {
                                                                                         setRequestModal({ open: true, type: action.key, permit });
                                                                                     }
@@ -632,6 +641,113 @@ export default function Dashboard() {
                     </div>
                 )
             }
+
+            {/* Finish Request Modal */}
+            {finishModal.open && finishModal.permit && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="card w-full max-w-md p-6 animate-in" dir="rtl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-surface-900">انهاء الطلب</h2>
+                            <button
+                                onClick={() => setFinishModal({ open: false, permit: null })}
+                                className="btn-ghost p-2"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="mb-4 p-3 bg-surface-50 rounded-lg">
+                            <p className="text-sm text-surface-600">
+                                <span className="font-medium">رقم الرخصة:</span> {finishModal.permit?.permit_number || finishModal.permit?.pre_permit_number || '-'}
+                            </p>
+                            <p className="text-sm text-surface-600 mt-1">
+                                <span className="font-medium">نوع الطلب:</span> {getRequestTypeLabel(finishModal.permit?.current_request_type)}
+                            </p>
+                            <p className="text-sm text-surface-600 mt-1">
+                                <span className="font-medium">الحالة الحالية:</span> {statusOptions.find(s => s.status_key === finishModal.permit?.status)?.label || finishModal.permit?.status}
+                            </p>
+                        </div>
+
+                        <p className="text-surface-700 font-medium mb-4">هل تود تعديل حالة الطلب؟</p>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setFinishModal({ open: false, permit: null })}
+                                className="btn-secondary flex-1"
+                            >
+                                إلغاء
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const permit = finishModal.permit;
+                                    const status = permit.status;
+                                    const requestType = permit.current_request_type;
+                                    let newStatus = status;
+
+                                    // Rejected logic
+                                    if (requestType === 'permit') {
+                                        newStatus = 'active';
+                                    } else if (requestType === 'work_completion') {
+                                        newStatus = 'pending_work_completion';
+                                    } else if (requestType === 'clearance') {
+                                        newStatus = 'pending_clearance';
+                                    }
+
+                                    try {
+                                        const { error } = await supabase
+                                            .from('permits')
+                                            .update({ status: newStatus })
+                                            .eq('id', permit.id);
+                                        if (error) throw error;
+                                        toast.success('تم رفض الطلب');
+                                        setFinishModal({ open: false, permit: null });
+                                        fetchPermits();
+                                    } catch (error) {
+                                        console.error('Reject error:', error);
+                                        toast.error(error.message || 'فشل في تحديث الحالة');
+                                    }
+                                }}
+                                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-white bg-red-500 hover:bg-red-600 transition-colors"
+                            >
+                                تم الرفض
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    const permit = finishModal.permit;
+                                    const status = permit.status;
+                                    let newStatus = status;
+
+                                    // Approved logic
+                                    if (status === 'pending_municipality') {
+                                        newStatus = 'pending_work_completion';
+                                    } else if (status === 'pending_work_completion') {
+                                        newStatus = 'pending_clearance';
+                                    } else if (status === 'pending_clearance') {
+                                        newStatus = 'closed';
+                                    }
+
+                                    try {
+                                        const { error } = await supabase
+                                            .from('permits')
+                                            .update({ status: newStatus })
+                                            .eq('id', permit.id);
+                                        if (error) throw error;
+                                        toast.success('تم قبول الطلب');
+                                        setFinishModal({ open: false, permit: null });
+                                        fetchPermits();
+                                    } catch (error) {
+                                        console.error('Approve error:', error);
+                                        toast.error(error.message || 'فشل في تحديث الحالة');
+                                    }
+                                }}
+                                className="flex-1 px-4 py-2.5 rounded-xl font-medium text-white bg-green-500 hover:bg-green-600 transition-colors"
+                            >
+                                تم القبول
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
